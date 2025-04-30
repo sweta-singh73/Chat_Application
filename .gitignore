@@ -1,0 +1,27 @@
+# Node modules
+backend/node_modules/
+frontend/node_modules/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+
+# Build output
+dist/
+build/
+
+# Temp files
+*.tmp
+*.swp
+
+# Lock files
+backend/package-lock.json
+frontend/package-lock.json
