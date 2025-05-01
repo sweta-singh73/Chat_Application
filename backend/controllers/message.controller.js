@@ -3,7 +3,7 @@ const path = require("path");
 
 // Send Message
 const sendMessage = async (req, res) => {
-  const { sender, receiver, content } = req.body;
+  const { receiver, content } = req.body;
 
   try {
     const photoUrls = req.files
@@ -11,7 +11,7 @@ const sendMessage = async (req, res) => {
       : [];
 
     const message = new Message({
-      sender,
+      sender: req.user._id, // taken from token
       receiver,
       content,
       photos: photoUrls,

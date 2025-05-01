@@ -10,6 +10,7 @@ const path = require("path");
 require("dotenv").config();
 
 const app = express();
+
 const server = http.createServer(app);
 
 const corsOptions = {
@@ -20,12 +21,13 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 dbConnection();
 
 // Routes
 app.use("/api/users", userRoutes);
-app.use("/api/messages", messageRoutes);
+app.use("/api/messages", messageRoutes);      
 
 const io = socketIo(server, {
   cors: corsOptions,

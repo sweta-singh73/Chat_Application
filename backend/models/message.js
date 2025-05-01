@@ -8,7 +8,7 @@ const messageSchema = new mongoose.Schema({
     required: true,
   },
   content: { type: String, required: true },
-  photos:  [{ type: String }],
+  photos: [{ type: String }],
   timestamp: { type: Date, default: Date.now },
 });
 

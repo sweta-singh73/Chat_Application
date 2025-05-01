@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const { generateToken } = require("../utils/generateToken");
 
 const loginUser = async (req, res) => {
   const { name, email } = req.body;
@@ -6,7 +7,9 @@ const loginUser = async (req, res) => {
     let user = await User.findOne({ email });
     if (!user) {
       user = new User({ name, email });
+      const token = await generateToken(user._id);
       await user.save();
+      res.status(200).json({data: token});
     }
     res.status(200).json({ user });
   } catch (err) {
@@ -14,7 +17,6 @@ const loginUser = async (req, res) => {
   }
 };
 
-// Search Users
 const searchUsers = async (req, res) => {
   const { search } = req.query;
   try {

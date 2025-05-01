@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { sendMessage as sendMessageApi } from "../api/messageApi.js";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  sendMessage as sendMessageApi,
+  getMessages,
+} from "../api/messageApi.js";
 import { searchUsers } from "../api/userApi.js";
 import {
   connectSocket,
@@ -13,12 +16,15 @@ import "../Chat.css";
 
 const Chat = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [chatWith, setChatWith] = useState(userId || null);
+  const [chatUser, setChatUser] = useState(null);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -27,24 +33,20 @@ const Chat = () => {
     }
   }, []);
 
-  // Fetch messages and setup socket when the currentUser is set
   useEffect(() => {
     if (!currentUser) return;
 
-    const initChat = async () => {
-      try {
-        const fetchedMessages = await getMessages(currentUser._id, userId);
-        setMessages(fetchedMessages);
-      } catch (err) {
-        console.error("Failed to fetch messages:", err);
-      }
-    };
-
-    initChat();
     connectSocket(currentUser._id);
 
     receiveMessage((newMessage) => {
-      setMessages((prev) => [...prev, newMessage]);
+      if (
+        (newMessage.sender === currentUser._id &&
+          newMessage.receiver === chatWith) ||
+        (newMessage.sender === chatWith &&
+          newMessage.receiver === currentUser._id)
+      ) {
+        setMessages((prev) => [...prev, newMessage]);
+      }
     });
 
     receiveOnlineUsers((users) => {
@@ -54,24 +56,58 @@ const Chat = () => {
     return () => {
       disconnectSocket();
     };
-  }, [currentUser, userId]);
+  }, [currentUser, chatWith]);
 
-  // Handle sending messages
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!currentUser || !chatWith) return;
+      try {
+        const msgs = await getMessages(currentUser._id, chatWith);
+        setMessages(msgs);
+      } catch (err) {
+        console.error("Failed to fetch messages:", err);
+      }
+    };
+
+    fetchMessages();
+  }, [chatWith, currentUser]);
+
+  useEffect(() => {
+    const loadUserFromParam = async () => {
+      if (!userId || !currentUser) return;
+      try {
+        const results = await searchUsers(""); // fetch all
+        const user = results.find((u) => u._id === userId);
+        if (user) {
+          setChatUser(user);
+          setChatWith(userId);
+        }
+      } catch (err) {
+        console.error("Failed to find user:", err);
+      }
+    };
+
+    loadUserFromParam();
+  }, [userId, currentUser]);
+
   const handleSendMessage = async () => {
-    if (!message.trim() || !currentUser) return;
+    if (!message.trim() || !currentUser || !chatWith) return;
 
     const newMessage = {
       sender: currentUser._id,
-      receiver: userId,
+      receiver: chatWith,
       content: message,
     };
 
     try {
-      console.log("Sending message:", newMessage); // Add logging for debugging
-      await sendMessageApi(newMessage); // Send to the backend via API
-      sendSocketMessage(newMessage); // Send via socket
-      setMessages((prev) => [...prev, newMessage]); // Update UI with the new message
-      setMessage(""); // Clear the input
+      await sendMessageApi(newMessage);
+      sendSocketMessage({
+        from: currentUser._id,
+        to: chatWith,
+        content: message,
+      });
+      setMessages((prev) => [...prev, newMessage]);
+      setMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
     }
@@ -83,23 +119,46 @@ const Chat = () => {
 
     try {
       const results = await searchUsers(searchQuery);
-      setSearchResults(results);
+      setSearchResults(results.filter((user) => user._id !== currentUser._id));
     } catch (error) {
-      console.error("Failed to search for users", error);
+      console.error("Failed to search users:", error);
     }
+  };
+
+  const startChatWithUser = (user) => {
+    setChatUser(user);
+    setChatWith(user._id);
+    setMessages([]);
+    setSearchResults([]);
+    setSearchQuery("");
+    navigate(`/chat/${user._id}`);
   };
 
   return (
     <div className="chat-container">
       <div className="sidebar">
-        <h3>Online Users</h3>
-        {onlineUsers.map((user) => (
-          <div key={user._id} className="online-user">
-            {user.name}
-          </div>
-        ))}
+        <div className="current-user-info">
+          {currentUser && (
+            <>
+              <div className="user-icon">👤</div>
+              <div className="username">{currentUser.name}</div>
+            </>
+          )}
+        </div>
 
-        {/* Search functionality */}
+        <h4>Online Users</h4>
+        {onlineUsers
+          .filter((user) => user._id !== currentUser?._id)
+          .map((user) => (
+            <div
+              key={user._id}
+              className="online-user clickable"
+              onClick={() => startChatWithUser(user)}
+            >
+              🟢 {user.name}
+            </div>
+          ))}
+
         <form onSubmit={handleSearch}>
           <input
             type="text"
@@ -114,14 +173,11 @@ const Chat = () => {
           <div className="search-results">
             <h4>Search Results</h4>
             {searchResults.map((user) => (
-              <div
-                key={user._id}
-                className="search-result"
-                onClick={() => setMessages([])}
-              >
+              <div key={user._id} className="search-result">
                 <p>{user.name}</p>
-                {/* On click, initiate a new chat with the selected user */}
-                <button onClick={() => setMessages([])}>Start Chat</button>
+                <button onClick={() => startChatWithUser(user)}>
+                  Start Chat
+                </button>
               </div>
             ))}
           </div>
@@ -129,7 +185,9 @@ const Chat = () => {
       </div>
 
       <div className="chat-box">
-        <div className="chat-header">Chat with {userId}</div>
+        <div className="chat-header">
+          {chatUser ? `Chat with ${chatUser.name}` : "Select a user to start chat"}
+        </div>
 
         <div className="chat-messages">
           {messages.map((msg, index) => (
@@ -152,12 +210,15 @@ const Chat = () => {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Type a message..."
+            disabled={!chatWith}
           />
-          <button onClick={handleSendMessage}>Send</button>
+          <button onClick={handleSendMessage} disabled={!chatWith}>
+            Send
+          </button>
         </div>
       </div>
     </div>
   );
 };
 
-export default Chat; 
+export default Chat;

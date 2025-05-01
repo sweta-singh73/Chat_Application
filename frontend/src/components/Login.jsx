@@ -9,13 +9,28 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
+    console.log("Login button clicked");
+    if (!name || !email) {
+      alert("Please enter both name and email.");
+      return;
+    }
+
     try {
       const userData = { name, email };
       const user = await loginUser(userData);
-      // Navigate to the chat page upon successful login
-      navigate(`/chat/${user.user._id}`);
+      console.log("User response:", user.user._id);
+
+      if (user && user.user && user.user._id) {
+        // Save to local storage
+        localStorage.setItem("user", JSON.stringify(user.user));
+
+        // Navigate to chat page
+        navigate(`/chat/${user.user.name}`);
+      } else {
+        console.error("Invalid login response:", user);
+      }
     } catch (error) {
-      console.error("Login failed", error);
+      console.error("Login failed:", error.response?.data || error.message);
     }
   };
 
