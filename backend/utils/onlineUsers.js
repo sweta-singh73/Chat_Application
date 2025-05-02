@@ -1,15 +1,21 @@
-let onlineUsers = {};
-
-const addUser = (userId, socketId) => {
-  onlineUsers[userId] = socketId;
+const onlineUsers = new Map();
+ 
+module.exports = {
+  addUser(userId, socketId) {
+    onlineUsers.set(userId, socketId);
+  },
+  removeUserBySocket(socketId) {
+    for (const [userId, sockId] of onlineUsers.entries()) {
+      if (sockId === socketId) {
+        onlineUsers.delete(userId);
+        return userId;
+      }
+    }
+  },
+  getOnlineUsers() {
+    return Array.from(onlineUsers.keys());
+  },
+  getSocketByUser(userId) {
+    return onlineUsers.get(userId);
+  }
 };
-
-const removeUser = (userId) => {
-  delete onlineUsers[userId];
-};
-
-const getUser = (userId) => {
-  return onlineUsers[userId];
-};
-
-module.exports = { addUser, removeUser, getUser };

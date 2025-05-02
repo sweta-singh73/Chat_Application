@@ -7,7 +7,7 @@ const upload = require("../middlewares/image.middleware");
 const verifyToken = require("../middlewares/auth");
 const router = express.Router();
 
-router.post("/send", verifyToken, upload.any(), sendMessage);
+router.post("/send", verifyToken, sendMessage);
 
 router.get("/history", getMessages);
 

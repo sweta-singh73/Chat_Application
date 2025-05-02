@@ -1,43 +1,36 @@
 const Message = require("../models/message");
-const path = require("path");
+const Chat = require("../models/chat");
 
-// Send Message
 const sendMessage = async (req, res) => {
-  const { receiver, content } = req.body;
-
+  const { chatId, messageType, content } = req.body;
+  const sender = req.user._id;
   try {
-    const photoUrls = req.files
-      ? req.files.map((file) => path.join("/uploads", file.filename))
-      : [];
-
-    const message = new Message({
-      sender: req.user._id, // taken from token
-      receiver,
+    const message = await Message.create({
+      chat: chatId,
       content,
-      photos: photoUrls,
+      sender,
+      messageType,
     });
 
-    await message.save();
-    res.status(200).json({ message });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    //update lastmessage
+    await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
+    res.json(message);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 
-// Get Message History
 const getMessages = async (req, res) => {
-  const { userId, otherUserId } = req.query;
   try {
-    const messages = await Message.find({
-      $or: [
-        { sender: userId, receiver: otherUserId },
-        { sender: otherUserId, receiver: userId },
-      ],
-    }).sort({ timestamp: 1 });
+    const { chatId } = req.params;
 
-    res.status(200).json(messages);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    const messages = await Message.find({ chat: chatId }).populate(
+      "sender",
+      "name"
+    );
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };
 

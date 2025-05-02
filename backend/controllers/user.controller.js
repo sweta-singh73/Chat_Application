@@ -1,21 +1,4 @@
 const User = require("../models/user");
-const { generateToken } = require("../utils/generateToken");
-
-const loginUser = async (req, res) => {
-  const { name, email } = req.body;
-  try {
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = new User({ name, email });
-      const token = await generateToken(user._id);
-      await user.save();
-      res.status(200).json({data: token});
-    }
-    res.status(200).json({ user });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
 const searchUsers = async (req, res) => {
   const { search } = req.query;
@@ -29,4 +12,4 @@ const searchUsers = async (req, res) => {
   }
 };
 
-module.exports = { loginUser, searchUsers };
+module.exports = { searchUsers };
