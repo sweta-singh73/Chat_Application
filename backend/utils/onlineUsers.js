@@ -1,5 +1,5 @@
 const onlineUsers = new Map();
- 
+
 module.exports = {
   addUser(userId, socketId) {
     onlineUsers.set(userId, socketId);
@@ -17,5 +17,5 @@ module.exports = {
   },
   getSocketByUser(userId) {
     return onlineUsers.get(userId);
-  }
+  },
 };
