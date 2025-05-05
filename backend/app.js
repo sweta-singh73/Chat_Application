@@ -15,28 +15,34 @@ const server = http.createServer(app);
 
 const corsOptions = {
   origin: [
-    "http://localhost:5173",
-    "chrome-extension://ophmdkgfcjapomjdpfobjfbihojchbko",
+    "chrome-extension://ophmdkgfcjapomjdpfobjfbihojchbko", 
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true,
+  credentials: true,  
 };
 
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));  
 
 dbConnection();
 
 const io = socketIo(server, {
-  cors: corsOptions, 
-  transports: ["websocket", "polling"],
+  cors: {
+    origin: [
+      "chrome-extension://ophmdkgfcjapomjdpfobjfbihojchbko",
+    ],
+    methods: ["GET", "POST"],
+    allowedHeaders: ["my-custom-header"], 
+    credentials: true,
+  },
+  transports: ["websocket", "polling"], 
 });
 
 socketHandler(io);
 
-// Routes
+// API Routes
 app.use("/api/users", userRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/chat", chatRoutes);

@@ -1,0 +1,5 @@
+{
+  "query": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2ODE4NjBjMTQyYWM2OGZhNmZjZTNhOTUiLCJpYXQiOjE3NDY0Mzc2MzEsImV4cCI6MTc0NjUyNDAzMX0.qusvGKXDCSBo_6K-7wIUhc_PVcleiQSAJUq65gi-tWM"
+  }
+}

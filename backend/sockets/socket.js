@@ -1,9 +1,15 @@
 const jwt = require("jsonwebtoken");
+const Message = require("../models/message");
 
 const socketHandler = (io) => {
   io.on("connection", async (socket) => {
     try {
-      const token = socket.handshake.auth?.token;
+      // const token = socket.handshake.auth?.token;
+      const token = socket.handshake.query.token;
+
+      console.log(socket.handshake.query);
+
+      console.log("token", token);
       if (!token) {
         console.log("Connection rejected: No token provided");
         socket.emit("error", "No token provided");
@@ -12,7 +18,7 @@ const socketHandler = (io) => {
       }
 
       const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      const userId = decoded.id;
+      const userId = decoded._id;
 
       if (!userId) {
         console.log("Connection rejected: Invalid token");
