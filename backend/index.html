@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Socket.IO Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 50px;
+      }
+      #message {
+        margin-top: 20px;
+        font-size: 20px;
+        color: green;
+      }
+      input {
+        padding: 10px;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Socket.IO WebSocket Test</h1>
+    <div>
+      <button id="connectBtn">Connect to Server</button>
+      <br /><br />
+      <input type="text" id="messageInput" placeholder="Type a message..." />
+      <button id="sendMessageBtn">Send Message</button>
+    </div>
+
+    <div id="message"></div>
+
+    <script>
+      let socket;
+
+      // You should retrieve the token from wherever it's stored (e.g., localStorage, sessionStorage, or cookies)
+      const token = localStorage.getItem("token"); // Example
+
+      document.getElementById("connectBtn").addEventListener("click", () => {
+        // Ensure the token is provided when connecting
+        if (!token) {
+          alert("No token found. Please login first.");
+          return;
+        }
+
+        // Connect to the server and pass the token in the authentication headers
+        socket = io("http://localhost:5000", {
+          auth: {
+            token: token, // Passing the token to the server
+          },
+        });
+
+        // Listen for the server's response
+        socket.on("message", (msg) => {
+          document.getElementById("message").innerText = msg;
+        });
+
+        // Handle error message from the server
+        socket.on("error", (error) => {
+          document.getElementById("message").innerText = `Error: ${error}`;
+        });
+      });
+
+      document
+        .getElementById("sendMessageBtn")
+        .addEventListener("click", () => {
+          const message = document.getElementById("messageInput").value;
+          if (socket && message) {
+            socket.emit("clientMessage", message);
+          }
+        });
+    </script>
+  </body>
+</html>
