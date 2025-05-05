@@ -4,51 +4,51 @@ import { useNavigate } from "react-router-dom";
 import "../App.css";
 
 const Login = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    console.log("Login button clicked");
-    if (!name || !email) {
-      alert("Please enter both name and email.");
+    if (!phone || !password) {
+      alert("Please enter both phone and password.");
       return;
     }
 
     try {
-      const userData = { name, email };
-      const user = await loginUser(userData);
-      console.log("User response:", user.user._id);
+      const userData = { phone, password };
+      const response = await loginUser(userData);
+      console.log("Login response:", response);
 
-      if (user && user.user && user.user._id) {
-        // Save to local storage
-        localStorage.setItem("user", JSON.stringify(user.user));
+      if (response && response.user && response.user._id) {
+        // Save user data to localStorage
+        localStorage.setItem("user", JSON.stringify(response.user));
 
-        // Navigate to chat page
-        navigate(`/chat/${user.user.name}`);
+        // Navigate to chat or dashboard
+        navigate(`/chat/${response.user.name}`);
       } else {
-        console.error("Invalid login response:", user);
+        alert("Invalid login credentials");
       }
     } catch (error) {
       console.error("Login failed:", error.response?.data || error.message);
+      alert(error.response?.data?.error || "Login failed");
     }
   };
 
   return (
     <div className="login-container">
       <div className="login-box">
-        <h2>Login or Register</h2>
+        <h2>Login</h2>
         <input
           type="text"
-          placeholder="Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder="Phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
         />
         <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
         <button onClick={handleLogin}>Login</button>
       </div>

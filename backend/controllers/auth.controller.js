@@ -40,23 +40,25 @@ const login = async (req, res) => {
       return res.status(400).json({ error: "User not found!" });
     }
 
-    console.log("Stored hashed password:", user.password);
-    console.log("Received password:", password);
-
-    const comparePass = await bcrypt.compare(password.trim(), user.password);
-
-    console.log("comparePass result:", comparePass);
-
-    if (!comparePass) {
+    const isPasswordMatch = await bcrypt.compare(password.trim(), user.password);
+    if (!isPasswordMatch) {
       return res.status(400).json({ error: "Password does not match" });
     }
 
     const token = await generateToken(user._id);
-    res.status(200).json({ message: "User login successfully", data: token });
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.status(200).json({
+      message: "User login successfully",
+      user: userObj,
+      token,
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Server error" });
   }
 };
+
 
 module.exports = { register, login };
